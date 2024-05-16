@@ -28,7 +28,8 @@ app.use(function (req, res, next) {
 
 app.post("/subscribe", (req, res) => {
   // Get pushSubscription object
-  const subscription = req.body;
+  const subscription = req.body.subscriptionData;
+  console.log(subscription);
   const settings = {
     web: {
       vapidDetails: {
@@ -48,7 +49,9 @@ app.post("/subscribe", (req, res) => {
   const push = new PushNotifications(settings);
 
   // Create payload
-  const payload = { title: "Notification from Knock" };
+  const payload = req.body.message;
+
+  console.log(payload);
   push.send(subscription, payload, (err, result) => {
     if (err) {
       console.log(err);
