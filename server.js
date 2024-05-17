@@ -1,6 +1,9 @@
 const express = require("express");
+require("dotenv").config();
 const bodyParser = require("body-parser");
 const PushNotifications = require("node-pushnotifications");
+const Policy = require("./utilities/models/policyModel");
+const connect = require("./utilities/dbconfig");
 
 const app = express();
 
@@ -60,6 +63,51 @@ app.post("/subscribe", (req, res) => {
     }
   });
 });
+connect();
+app.post("/create-policy", async (req, res) => {
+  const {
+    policyHolderName,
+    policyType,
+    coverageAmount,
+    premiumAmount,
+    policyDuration,
+  } = req.body;
+
+  try {
+    const newPolicy = new Policy({
+      policyHolderName,
+      policyType,
+      coverageAmount,
+      premiumAmount,
+      policyDuration,
+    });
+
+    const savedPolicy = await newPolicy.save();
+    res.status(201).json({
+      message: "Policy created successfully",
+      policy: savedPolicy,
+    });
+  } catch (err) {
+    res.status(400).json({
+      message: "Error creating policy",
+      error: err.message,
+    });
+  }
+});
+
+app.get("/get-policies", async (req, res) => {
+  try {
+    const policies = await Policy.find();
+    const result = res.status(200).json(policies);
+    console.log(result);
+  } catch (err) {
+    res.status(500).json({
+      message: "Error fetching policies",
+      error: err.message
+    });
+  }
+});
+
 const port = 4000;
 
 app.listen(port, () => console.log(`Server started on port ${port}`));
