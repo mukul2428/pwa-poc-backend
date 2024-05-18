@@ -73,6 +73,15 @@ app.post("/create-policy", async (req, res) => {
   } = req.body;
 
   try {
+    // Check if a policy with the same policyHolderName already exists
+    const existingPolicy = await Policy.findOne({ policyHolderName });
+    if (existingPolicy) {
+      return res.status(400).json({
+        message: "Policy with this policy holder name already exists",
+      });
+    }
+
+    // Create new policy if it doesn't exist
     const newPolicy = new Policy({
       policyHolderName,
       policyType,
