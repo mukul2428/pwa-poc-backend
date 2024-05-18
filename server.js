@@ -29,40 +29,39 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.post("/subscribe", (req, res) => {
-  // Get pushSubscription object
-  const subscription = req.body.subscriptionData;
-  console.log(subscription);
-  const settings = {
-    web: {
-      vapidDetails: {
-        subject: process.env.SUBJECT,
-        publicKey: process.env.VAPID_PUBLIC_KEY,
-        privateKey: process.env.VAPID_PRIVATE_KEY,
+app.post("/subscribe", async (req, res) => {
+  try {
+    const subscription = req.body.subscriptionData;
+    const payload = req.body.message;
+
+    const settings = {
+      web: {
+        vapidDetails: {
+          subject: process.env.SUBJECT,
+          publicKey: process.env.VAPID_PUBLIC_KEY,
+          privateKey: process.env.VAPID_PRIVATE_KEY,
+        },
+        gcmAPIKey: "gcmkey",
+        TTL: 2419200,
+        contentEncoding: "aes128gcm",
+        headers: {},
       },
-      gcmAPIKey: "gcmkey",
-      TTL: 2419200,
-      contentEncoding: "aes128gcm",
-      headers: {},
-    },
-    isAlwaysUseFCM: false,
-  };
+      isAlwaysUseFCM: false,
+    };
 
-  // Send 201 - resource created
-  const push = new PushNotifications(settings);
+    const push = new PushNotifications(settings);
 
-  // Create payload
-  const payload = req.body.message;
+    await push.send(subscription, payload);
 
-  console.log(payload);
-  push.send(subscription, payload, (err, result) => {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log(result);
-    }
-  });
+    return res.status(201).json({ message: "Subscription successful" });
+  } catch (err) {
+    console.log(err);
+    return res
+      .status(500)
+      .json({ message: "Error in subscription", error: err.message });
+  }
 });
+
 connect();
 app.post("/create-policy", async (req, res) => {
   const {
@@ -102,7 +101,7 @@ app.get("/get-policies", async (req, res) => {
   } catch (err) {
     return res.status(500).json({
       message: "Error fetching policies",
-      error: err.message
+      error: err.message,
     });
   }
 });
