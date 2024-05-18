@@ -83,12 +83,12 @@ app.post("/create-policy", async (req, res) => {
     });
 
     const savedPolicy = await newPolicy.save();
-    res.status(201).json({
+    return res.status(201).json({
       message: "Policy created successfully",
       policy: savedPolicy,
     });
   } catch (err) {
-    res.status(400).json({
+    return res.status(400).json({
       message: "Error creating policy",
       error: err.message,
     });
@@ -98,10 +98,9 @@ app.post("/create-policy", async (req, res) => {
 app.get("/get-policies", async (req, res) => {
   try {
     const policies = await Policy.find();
-    const result = res.status(200).json(policies);
-    console.log(result);
+    return res.status(200).json(policies);
   } catch (err) {
-    res.status(500).json({
+    return res.status(500).json({
       message: "Error fetching policies",
       error: err.message
     });
