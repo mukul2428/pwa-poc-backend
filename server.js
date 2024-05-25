@@ -7,22 +7,14 @@ const connect = require("./utilities/dbconfig");
 const User = require("./utilities/models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const cors = require("cors");
 
 const app = express();
 
+// Use the cors middleware
+app.use(cors());
+
 app.use(bodyParser.json());
-
-const corsOptions = {
-  origin: "*", // Adjust this to your front-end origin
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-  allowedHeaders: "Content-Type,Authorization",
-  credentials: true,
-};
-
-app.use(cors(corsOptions));
-
-// Handle preflight requests globally
-app.options("*", cors(corsOptions));
 
 app.post("/subscribe", async (req, res) => {
   try {
