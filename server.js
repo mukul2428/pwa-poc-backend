@@ -4,6 +4,9 @@ const bodyParser = require("body-parser");
 const PushNotifications = require("node-pushnotifications");
 const Policy = require("./utilities/models/policyModel");
 const connect = require("./utilities/dbconfig");
+const User = require("./utilities/models/User");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 const app = express();
 
@@ -112,6 +115,86 @@ app.get("/get-policies", async (req, res) => {
       message: "Error fetching policies",
       error: err.message,
     });
+  }
+});
+
+app.post("/signup", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Check if the user already exists
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // Hash the password before saving
+    const salt = await bcrypt.genSaltSync(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create a new user
+    user = new User({ email, password: hashedPassword });
+    const result = await user.save();
+
+    // Create a JWT token
+    const payload = { userId: user._id };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    // Respond with the user data and token
+    return res.status(201).json({
+      message: "User created successfully",
+      data: {
+        user: {
+          password: result.password,
+          email: result.email,
+        },
+        token,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.log("User not found");
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Compare the provided password with the stored hash
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.log("Password mismatch");
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Create JWT payload
+    const payload = { userId: user._id };
+
+    // Sign the token with the secret from environment variables
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    return res.status(200).json({
+      message: "User LoggedIn successfully",
+      data: {
+        user: {
+          password: user.password,
+          email: user.email,
+        },
+        token,
+      },
+    });
+  } catch (error) {
+    console.error("Error during login:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
