@@ -121,7 +121,7 @@ app.post("/signup", async (req, res) => {
     const result = await newUser.save();
 
     // Create a JWT token
-    const payload = { userId: user._id };
+    const payload = { userId: result._id };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
