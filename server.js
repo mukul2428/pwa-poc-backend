@@ -117,8 +117,8 @@ app.post("/signup", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create a new user
-    user = new User({ email, password: hashedPassword });
-    const result = await user.save();
+    const newUser = new User({ email, password: hashedPassword });
+    const result = await newUser.save();
 
     // Create a JWT token
     const payload = { userId: user._id };
@@ -129,13 +129,7 @@ app.post("/signup", async (req, res) => {
     // Respond with the user data and token
     return res.status(201).json({
       message: "User created successfully",
-      data: {
-        user: {
-          password: result.password,
-          email: result.email,
-        },
-        token,
-      },
+      token
     });
   } catch (error) {
     console.error(error);
@@ -148,14 +142,12 @@ app.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      console.log("User not found");
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     // Compare the provided password with the stored hash
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log("Password mismatch");
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
@@ -168,13 +160,7 @@ app.post("/login", async (req, res) => {
     });
     return res.status(200).json({
       message: "User LoggedIn successfully",
-      data: {
-        user: {
-          password: user.password,
-          email: user.email,
-        },
-        token,
-      },
+      token
     });
   } catch (error) {
     console.error("Error during login:", error);
