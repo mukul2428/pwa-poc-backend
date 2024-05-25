@@ -12,14 +12,17 @@ const app = express();
 
 app.use(bodyParser.json());
 
-// Use CORS with specific options
 const corsOptions = {
-  origin: "*",
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  origin: "*", // Adjust this to your front-end origin
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
   allowedHeaders: "Content-Type,Authorization",
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
+
+// Handle preflight requests globally
+app.options("*", cors(corsOptions));
 
 app.post("/subscribe", async (req, res) => {
   try {
