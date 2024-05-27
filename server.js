@@ -1,7 +1,7 @@
 const express = require("express");
 require("dotenv").config();
 const bodyParser = require("body-parser");
-const PushNotifications = require("node-pushnotifications");
+const webPush = require("web-push");
 const Policy = require("./utilities/models/policyModel");
 const connect = require("./utilities/dbconfig");
 const User = require("./utilities/models/User");
@@ -16,29 +16,19 @@ app.use(cors());
 
 app.use(bodyParser.json());
 
+const publicVapidKey = process.env.VAPID_PUBLIC_KEY;
+const privateVapidKey = process.env.VAPID_PRIVATE_KEY;
+
+// Set VAPID details
+webPush.setVapidDetails(process.env.SUBJECT, publicVapidKey, privateVapidKey);
+
 app.post("/subscribe", async (req, res) => {
   try {
     const subscription = req.body.subscriptionData;
-    const payload = req.body.message;
+    const payload = JSON.stringify(req.body.message);
 
-    const settings = {
-      web: {
-        vapidDetails: {
-          subject: process.env.SUBJECT,
-          publicKey: process.env.VAPID_PUBLIC_KEY,
-          privateKey: process.env.VAPID_PRIVATE_KEY,
-        },
-        gcmAPIKey: "gcmkey",
-        TTL: 2419200,
-        contentEncoding: "aes128gcm",
-        headers: {},
-      },
-      isAlwaysUseFCM: false,
-    };
-
-    const push = new PushNotifications(settings);
-
-    await push.send(subscription, payload);
+    // Send notification
+    await webPush.sendNotification(subscription, payload);
 
     return res.status(201).json({ message: "Subscription successful" });
   } catch (err) {
@@ -129,7 +119,7 @@ app.post("/signup", async (req, res) => {
     // Respond with the user data and token
     return res.status(201).json({
       message: "User created successfully",
-      token
+      token,
     });
   } catch (error) {
     console.error(error);
@@ -160,7 +150,7 @@ app.post("/login", async (req, res) => {
     });
     return res.status(200).json({
       message: "User LoggedIn successfully",
-      token
+      token,
     });
   } catch (error) {
     console.error("Error during login:", error);
