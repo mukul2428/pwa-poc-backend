@@ -8,6 +8,7 @@ const User = require("./utilities/models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const cors = require("cors");
+const admin = require('firebase-admin');
 
 const app = express();
 
@@ -18,6 +19,10 @@ app.use(bodyParser.json());
 
 const publicVapidKey = process.env.VAPID_PUBLIC_KEY;
 const privateVapidKey = process.env.VAPID_PRIVATE_KEY;
+const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 // Set VAPID details
 webPush.setVapidDetails(process.env.SUBJECT, publicVapidKey, privateVapidKey);
@@ -37,6 +42,28 @@ app.post("/subscribe", async (req, res) => {
       .status(500)
       .json({ message: "Error in subscription", error: err.message });
   }
+});
+
+app.post("/send-notification", (req, res) => {
+  const { title, body, token } = req.body;
+
+  const message = {
+    notification: {
+      title: title,
+      body: body,
+    },
+    token: token,
+  };
+
+  admin
+    .messaging()
+    .send(message)
+    .then((response) => {
+      res.status(200).send("Notification sent successfully: " + response);
+    })
+    .catch((error) => {
+      res.status(500).send("Error sending notification: " + error);
+    });
 });
 
 connect();
