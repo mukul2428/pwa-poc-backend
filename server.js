@@ -12,8 +12,13 @@ const admin = require('firebase-admin');
 
 const app = express();
 
-// Use the cors middleware
-app.use(cors());
+// Use the cors middleware with specific configuration
+app.use(cors({
+  origin: 'https://react-pwa-poc-eight.vercel.app',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, // If you need to include credentials
+  optionsSuccessStatus: 204
+}));
 
 app.use(bodyParser.json());
 
